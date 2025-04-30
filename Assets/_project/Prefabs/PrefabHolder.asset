@@ -13,4 +13,7 @@ MonoBehaviour:
   m_Name: PrefabHolder
   m_EditorClassIdentifier: 
   MainButtonsPrefab: {fileID: 1190637688382741869, guid: 3f0033960a8d66c4cbbe7523bcdd42ad, type: 3}
-  WeatherPrefab: {fileID: 4969139720109055257, guid: f46c78f95e448cc4bbc38028c5b3078c, type: 3}
+  WeatherViewPrefab: {fileID: 4969139720109055257, guid: f46c78f95e448cc4bbc38028c5b3078c, type: 3}
+  DogViewPrefab: {fileID: 4559360964437318112, guid: e08eada2a3275ef48b6b6791f0af7975, type: 3}
+  LoadingDogPrefab: {fileID: 1922535707377001380, guid: 577935d52fc5b084688b4b18c728da70, type: 3}
+  DogPopUpPrefab: {fileID: 6622872908049115307, guid: f5a87aca765c9d7469bdf1ebf81359de, type: 3}

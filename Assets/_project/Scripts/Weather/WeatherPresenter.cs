@@ -16,16 +16,20 @@ namespace WeatherDogs
         {
             _view = view;
             _client = new WeatherApiClient();
-            _queue = queue;
-            _queue.Start();
+            _queue = queue;   
+        }
 
+        public void Start()
+        {
+            _view.Show();
+            _queue.Start();
             _loopCts = new CancellationTokenSource();
             StartAddingRequests(_loopCts.Token).Forget();
         }
 
         public void Stop()
         {
-            _view.DestroyView();
+            _view.Hide();
             _loopCts?.Cancel();
             _queue?.Stop();
         }

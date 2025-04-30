@@ -13,8 +13,9 @@ namespace WeatherDogs
 
         public void SetIcon(Sprite sprite) => _imageWeather.sprite = sprite;
 
-        public void DestroyView() => Destroy(gameObject);
+        public void Hide() => gameObject.SetActive(false);
 
+        public void Show() => gameObject.SetActive(true);
     }
 }
 

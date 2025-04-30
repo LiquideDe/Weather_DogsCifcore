@@ -4,66 +4,72 @@ using System.Threading;
 using Cysharp.Threading.Tasks;
 using UnityEngine;
 
-public class ServerRequestQueue
+namespace WeatherDogs
 {
-    private class RequestWrapper
+    public class ServerRequestQueue
     {
-        public Func<CancellationToken, UniTask> TaskFunc;
-        public CancellationTokenSource CTS;
-    }
-
-    private readonly Queue<RequestWrapper> _queue = new();
-    private bool _isProcessing;
-    private CancellationTokenSource _loopCts;
-
-    public void Start()
-    {
-        _loopCts = new CancellationTokenSource();
-        ProcessLoop(_loopCts.Token).Forget();
-    }
-
-    public void Stop()
-    {
-        _loopCts?.Cancel();
-    }
-
-    public void Enqueue(Func<CancellationToken, UniTask> taskFunc)
-    {
-        var wrapper = new RequestWrapper
+        private class RequestWrapper
         {
-            CTS = new CancellationTokenSource(),
-            TaskFunc = taskFunc
-        };
-        _queue.Enqueue(wrapper);
-    }
+            public Func<CancellationToken, UniTask> TaskFunc;
+            public CancellationTokenSource CTS;
+        }
 
-    private async UniTaskVoid ProcessLoop(CancellationToken token)
-    {
-        while (!token.IsCancellationRequested)
+        private readonly Queue<RequestWrapper> _queue = new();
+        private bool _isProcessing;
+        private CancellationTokenSource _loopCts;
+
+        public void Start()
         {
-            if (_isProcessing || _queue.Count == 0)
-            {
-                await UniTask.Yield();
-                continue;
-            }
+            _loopCts = new CancellationTokenSource();
+            ProcessLoop(_loopCts.Token).Forget();
+        }
 
-            var request = _queue.Dequeue();
-            _isProcessing = true;
+        public void Stop()
+        {
+            _loopCts?.Cancel();
+            _queue.Clear();
+        }
 
-            try
+        public void Enqueue(Func<CancellationToken, UniTask> taskFunc)
+        {
+            var wrapper = new RequestWrapper
             {
-                await request.TaskFunc(request.CTS.Token);
-            }
-            catch (OperationCanceledException)
-            {
-                Debug.Log("Запрос отменён.");
-            }
-            catch (Exception e)
-            {
-                Debug.LogError("Ошибка в запросе: " + e.Message);
-            }
+                CTS = new CancellationTokenSource(),
+                TaskFunc = taskFunc
+            };
+            _queue.Enqueue(wrapper);
+        }
 
-            _isProcessing = false;
+        private async UniTaskVoid ProcessLoop(CancellationToken token)
+        {
+            while (!token.IsCancellationRequested)
+            {
+                if (_isProcessing || _queue.Count == 0)
+                {
+                    await UniTask.Yield();
+                    continue;
+                }
+
+                var request = _queue.Dequeue();
+                _isProcessing = true;
+
+                try
+                {
+                    await request.TaskFunc(request.CTS.Token);
+                }
+                catch (OperationCanceledException)
+                {
+                    Debug.Log("Запрос отменён.");
+                }
+                catch (Exception e)
+                {
+                    Debug.LogError("Ошибка в запросе: " + e.Message);
+                }
+
+                _isProcessing = false;
+            }
         }
     }
 }
+
+

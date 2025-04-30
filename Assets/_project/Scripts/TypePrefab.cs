@@ -1,4 +1,8 @@
-public enum TypePrefab
+namespace WeatherDogs
 {
-    Weather, Dogs, Loading, InfoDog, MainButtons
+    public enum TypePrefab
+    {
+        Weather, Dogs, Loading, DogPopUp, MainButtons
+    }
 }
+
