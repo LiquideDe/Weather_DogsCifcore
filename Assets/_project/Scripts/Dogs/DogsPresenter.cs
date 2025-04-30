@@ -1,3 +1,4 @@
+
 namespace WeatherDogs
 {
     public class DogsPresenter
@@ -55,6 +56,11 @@ namespace WeatherDogs
             CheckAndDestroyLoadingPanel();
             CheckAndCreateLoadingPanel();
             ClosePopUp();
+            _queue.Enqueue(async token =>
+            {
+                var facts = await _client.GetDogFactsAsync(token);
+                _loadingPanel.Initialize(facts.data[0].attributes.body);
+            });
             _queue.Enqueue(async token =>
             {
                 var breed = await _client.GetBreedByIdAsync(id, token);
