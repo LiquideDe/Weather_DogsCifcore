@@ -1,4 +1,11 @@
 
+using Cysharp.Threading.Tasks;
+using System;
+using System.Threading;
+using Unity.VisualScripting.Antlr3.Runtime;
+using UnityEditor.Search;
+using UnityEngine;
+
 namespace WeatherDogs
 {
     public class DogsPresenter
@@ -9,6 +16,8 @@ namespace WeatherDogs
         private ViewFactory _viewFactory;
         private LoadingPanel _loadingPanel;
         private DogPopUp _dogPopUp;
+        private CancellationTokenSource _activeBreed;
+        private CancellationTokenSource _activeLoading;
 
         public DogsPresenter(DogsView view, ServerRequestQueue queue, ViewFactory viewFactory)
         {
@@ -47,17 +56,29 @@ namespace WeatherDogs
 
         private void ShowThisBreed(string id)
         {
-            _queue.Stop();
-            _queue.Start();
+            //_queue.Stop();
+            //_queue.Start();
+            _activeBreed?.Cancel();
             CheckAndDestroyLoadingPanel();
             CheckAndCreateLoadingPanel();
             ClosePopUp();
             AddToQueuLoading();
-            _queue.Enqueue(async token =>
+            _activeBreed = new CancellationTokenSource();
+            var token = _activeBreed.Token;
+            _queue.Enqueue(async queueToken =>
             {
-                var breed = await _client.GetBreedByIdAsync(id, token);
-                CreatePopUp(breed.attributes.name, breed.attributes.description);
-                CheckAndDestroyLoadingPanel();
+                using var linked = CancellationTokenSource.CreateLinkedTokenSource(queueToken, token);
+                try
+                {
+                    var breed = await _client.GetBreedByIdAsync(id, linked.Token);
+                    CreatePopUp(breed.attributes.name, breed.attributes.description);
+                    CheckAndDestroyLoadingPanel();
+                }
+                catch (OperationCanceledException)
+                {
+                    Debug.Log("Запрос породы отменён (выбрана другая)");
+                }
+                
             });
         }
 
@@ -81,17 +102,30 @@ namespace WeatherDogs
 
         private void ClosePopUp()
         {
-            if(_dogPopUp != null)
+            if (_dogPopUp != null)
                 _dogPopUp.Hide();
         }
 
         private void AddToQueuLoading()
         {
-            _queue.Enqueue(async token =>
+            _activeLoading?.Cancel();
+            _activeLoading = new CancellationTokenSource();
+            var token = _activeLoading.Token;
+            _queue.Enqueue(async queueToken =>
             {
-                var facts = await _client.GetDogFactsAsync(token);
-                if (facts.data.Length > 0)
-                    _loadingPanel.Initialize(facts.data[0].attributes.body);
+            using var linked = CancellationTokenSource.CreateLinkedTokenSource(queueToken, token);
+                try
+                {
+                    var facts = await _client.GetDogFactsAsync(linked.Token);
+                    if (facts.data.Length > 0)
+                        _loadingPanel.Initialize(facts.data[0].attributes.body);
+                    await UniTask.Delay(1000);
+                }
+                catch (OperationCanceledException)
+                {
+                    Debug.Log("Запрос отменён ");
+                }
+
             });
         }
     }
