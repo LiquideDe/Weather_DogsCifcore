@@ -27,11 +27,7 @@ namespace WeatherDogs
 
 
             CheckAndCreateLoadingPanel();
-            _queue.Enqueue(async token =>
-            {
-                var facts = await _client.GetDogFactsAsync(token);
-                _loadingPanel.Initialize(facts.data[0].attributes.body);
-            });
+            AddToQueuLoading();
 
             _queue.Enqueue(async token =>
             {
@@ -56,11 +52,7 @@ namespace WeatherDogs
             CheckAndDestroyLoadingPanel();
             CheckAndCreateLoadingPanel();
             ClosePopUp();
-            _queue.Enqueue(async token =>
-            {
-                var facts = await _client.GetDogFactsAsync(token);
-                _loadingPanel.Initialize(facts.data[0].attributes.body);
-            });
+            AddToQueuLoading();
             _queue.Enqueue(async token =>
             {
                 var breed = await _client.GetBreedByIdAsync(id, token);
@@ -91,6 +83,16 @@ namespace WeatherDogs
         {
             if(_dogPopUp != null)
                 _dogPopUp.Hide();
+        }
+
+        private void AddToQueuLoading()
+        {
+            _queue.Enqueue(async token =>
+            {
+                var facts = await _client.GetDogFactsAsync(token);
+                if (facts.data.Length > 0)
+                    _loadingPanel.Initialize(facts.data[0].attributes.body);
+            });
         }
     }
 }
