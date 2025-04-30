@@ -34,8 +34,6 @@ namespace WeatherDogs
             _view.ClearList();
             _view.Show();
 
-
-            CheckAndCreateLoadingPanel();
             AddToQueuLoading();
 
             _queue.Enqueue(async token =>
@@ -48,6 +46,8 @@ namespace WeatherDogs
 
         public void Stop()
         {
+            _activeBreed?.Cancel();
+            _activeLoading?.Cancel();
             _queue.Stop();
             CheckAndDestroyLoadingPanel();
             _view.Hide();
@@ -56,11 +56,8 @@ namespace WeatherDogs
 
         private void ShowThisBreed(string id)
         {
-            //_queue.Stop();
-            //_queue.Start();
             _activeBreed?.Cancel();
             CheckAndDestroyLoadingPanel();
-            CheckAndCreateLoadingPanel();
             ClosePopUp();
             AddToQueuLoading();
             _activeBreed = new CancellationTokenSource();
@@ -116,10 +113,11 @@ namespace WeatherDogs
             using var linked = CancellationTokenSource.CreateLinkedTokenSource(queueToken, token);
                 try
                 {
+                    CheckAndCreateLoadingPanel();
                     var facts = await _client.GetDogFactsAsync(linked.Token);
                     if (facts.data.Length > 0)
                         _loadingPanel.Initialize(facts.data[0].attributes.body);
-                    await UniTask.Delay(1000);
+                    //await UniTask.Delay(1000);
                 }
                 catch (OperationCanceledException)
                 {
